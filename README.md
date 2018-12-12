@@ -1,2 +1,2 @@
 # mySeat
-Get My Seat in WHU
+Get My Seat in WHU Library
