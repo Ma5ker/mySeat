@@ -6,15 +6,13 @@ def getHomePage(sess,headers):
     home_page = sess.get(url,headers = headers)
     return home_page
 
-def loginPage(sess,token,synuri,headers):
+def loginPage(sess,token,synuri,headers,username,password):
     url2= 'http://seat.lib.whu.edu.cn/auth/signIn'
     payload = {
         'SYNCHRONIZER_TOKEN': token,
         'SYNCHRONIZER_URI':synuri,
-        # 'username':'2015301500199',
-        # 'password':'010019',
-        'username':'2015301500200',
-        'password':'013313',
+        'username':username,
+        'password':password,
         'authid':'-1',
         'appId':'a3a5c1faff9e41c2b2447a52c5bd7ea0',
         'appAuthKey':'a109981dd38540d5b20b4af760d7f6f1'
@@ -30,7 +28,6 @@ def getSeatNum(seat_dict,roomNum,sess,headers,timeNow):
     soup_seat = BeautifulSoup(page_seat.text,"html.parser")
     for liTag in soup_seat.find_all('li'):
         if liTag.get('id')!= None:
-            #seat_list.append( liTag.get('id')[5:])
             seat_id = liTag.get('id')[5:]
             seatNum = liTag.find('a',"idle").text
             seat_dict[seatNum] = seat_id
@@ -41,7 +38,9 @@ def getSeatNum(seat_dict,roomNum,sess,headers,timeNow):
 if __name__=='__main__':
     timeVal = datetime.date.today() + datetime.timedelta(days=1)
     timeNow = timeVal.strftime('%Y-%m-%d')
-
+    #需要账户和密码
+    username = 'username'
+    password = 'password'
     #房间名对应数字 用于下载座位号
     room_dict = {}
     # room_dict['3C创客空间'] = '4'
@@ -79,15 +78,15 @@ if __name__=='__main__':
     synuri = soup.find('input',id = 'SYNCHRONIZER_URI')['value']
 
     #登陆操作
-    main_page = loginPage(sess,token,synuri,headers)
+    main_page = loginPage(sess,token,synuri,headers,username,password)
     while main_page.status_code !=200:
-        main_page = loginPage(sess,token,synuri,headers)
+        main_page = loginPage(sess,token,synuri,headers,username,password)
     #bp4解析 得到token
     soup = BeautifulSoup(main_page.text,"html.parser")
     final_token = soup.find('input',id = 'SYNCHRONIZER_TOKEN')['value']
     final_synuri = soup.find('input',id = 'SYNCHRONIZER_URI')['value']
 
-    #获取所有座位号
+    #获取所有座位号(某些房间号被室友举报环境太差删除了，见上面注释部分)
     for i in [6,7,8,9,10,11,12,15,16]:
         getSeatNum( roomNum_dict[str(i)],str(i), sess,headers,timeNow)
 
@@ -95,11 +94,3 @@ if __name__=='__main__':
     f = open('./seat_dict.txt','w')
     f.write(str(roomNum_dict))
     f.close()
-    #文件读出
-    f = open('./seat_dict.txt','r')
-    a = f.read()
-    dict_name = eval(a)
-    if(dict_name == roomNum_dict):
-        print('yes')
-    else:
-        print('no')
